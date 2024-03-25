@@ -10,9 +10,10 @@
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	"forwardPorts": [5000],
-	"portsAttributes": {"5000": {"label": "Flask Application port"}}
+	"portsAttributes": {"5000": {"label": "Flask Application port"}},
 
 	// Use 'postCreateCommand' to run commands after the container is created.
+	"postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",
 	// "postCreateCommand": "pip3 install --user -r requirements.txt",
 
 	// Configure tool-specific properties.
