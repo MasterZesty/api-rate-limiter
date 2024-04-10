@@ -4,7 +4,6 @@ for api rate limting
 """
 
 from datetime import datetime
-from multiprocessing import Process, Manager
 from time import sleep
 
 class TokenBucket():
@@ -38,7 +37,7 @@ class TokenBucket():
 
     def consume_token(self) -> None:
         """consume tokens in bucekt"""
-        if self.value >= 0:
+        if self.value > 0:
             self.value -= 1
             return
 
@@ -51,8 +50,7 @@ class TokenBucketManager():
     """
 
     def __init__(self) -> None:
-        self.manager = Manager()
-        self.bucket_pool = self.manager.dict()
+        self.bucket_pool = {}
 
     def create_token_bucket(self, bucket_id:str, max_tokens:int, refill_time:int,
                                 refill_amount:int, value:int) -> tuple[str, TokenBucket]:
@@ -93,43 +91,46 @@ class TokenBucketManager():
     def background_add_tokens(self) -> None:
         """add tokens to buckets in pool"""
         while True:
+            sleep(1)
             for bucket_id, _ in self.bucket_pool.items():
                 self.bucket_pool[bucket_id].add_token()
 
 
+def main():
+    """main"""
 
-if __name__ == "__main__":
-    print("token bucket rate limiting")
-    N = 100
-    USER_ID = "534f8aed-88de-4a81-aa26-a3b0ed5da26a"
-    BUCKET_ID=USER_ID
-    MAX_TOKENS=10 # max number of tokens
-    REFILL_TIME=10 # refill time in sec
-    REFILL_AMOUNT=1 # number of token to add during refill
+    n = 100
+    user_id = "534f8aed-88de-4a81-aa26-a3b0ed5da26a"
+    bucket_id=user_id
+    max_tokens=2 # max number of tokens
+    refill_time=10 # refill time in sec
+    refill_amount=0 # number of token to add during refill
+    t = 0 # time in sec between two request
 
-    T = 3 # time between two request
     pool = TokenBucketManager()
-    p1 = Process(target=pool.background_add_tokens, args=(pool.bucket_pool))
-    p1.start()
-    p1.join()
 
     # if bucket not exist create it for user
-    if not pool.is_token_bucekt_exists(USER_ID):
+    if not pool.is_token_bucekt_exists(bucket_id):
         bkt_id, bucket = \
-        pool.create_token_bucket(BUCKET_ID, MAX_TOKENS, REFILL_TIME, REFILL_TIME, REFILL_AMOUNT)
+        pool.create_token_bucket(bucket_id, max_tokens, refill_time, refill_amount, max_tokens)
         pool.add_bucket_in_pool(bkt_id, bucket)
 
     # simulate request from user
-    for i in range(N):
-        print(f"sending {i}th request from user {USER_ID}")
+    for i in range(1,n):
+        print(f"sending {i}th request from user {bucket_id}")
 
         # try to serve request
         try:
-            pool.bucket_pool[BUCKET_ID].consume_token()
+            print(f"bucket: {pool.bucket_pool[bucket_id]}")
+            pool.bucket_pool[bucket_id].consume_token()
             print(f"{i}th request served returning response from server")
         except ValueError as rate_limit_error:
-            print(f"rate limiting in action, send request after {T} seconds : {rate_limit_error}")
+            print(f"rate limiting in action, send request after {t} seconds : {rate_limit_error}")
 
-        sleep(T)
+        sleep(t)
 
-    p1.terminate()
+
+if __name__ == "__main__":
+    print("token bucket rate limiting started!")
+    main()
+    print("token bucket rate limiting stopped!")
