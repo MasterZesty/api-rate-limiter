@@ -1,6 +1,7 @@
 from flask import Flask, jsonify
 from utils import generate_city_data
 
+
 app = Flask(__name__)
 
 @app.route("/")
