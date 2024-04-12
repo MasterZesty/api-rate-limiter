@@ -92,7 +92,7 @@ class TokenBucketManager():
 
 if __name__ == "__main__":
     print("token bucket rate limiting started!")
-    
+
     n = 100
     user_id = "534f8aed-88de-4a81-aa26-a3b0ed5da26a"
     bucket_id=user_id
@@ -120,5 +120,5 @@ if __name__ == "__main__":
             print(f"rate limiting in action, send request after {t} seconds")
 
         sleep(t)
-        
+
     print("token bucket rate limiting stopped!")
