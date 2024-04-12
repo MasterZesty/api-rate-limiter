@@ -5,7 +5,7 @@ for flask based application
 
 ## rate limiting in action for max_tokens=1, refill_time=10, refill_amount=1, limit_by_user=False
 
-![Rate Limiter]()
+![Rate Limiter](https://github.com/MasterZesty/api-rate-limiter/blob/main/docs/imgs/1request_10sec.png)
 
 
 ## ref links:
