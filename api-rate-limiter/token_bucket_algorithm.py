@@ -26,7 +26,7 @@ class TokenBucket():
         return f"bucket_id : {self.bucket_id}, value : {self.value}, \
                     last_update : {self.last_update}"
 
-    def add_token(self) -> None:
+    def _add_token(self) -> None:
         """add token to bucket"""
         now = datetime.now()
         time_delta =  now - self.last_update
@@ -35,13 +35,14 @@ class TokenBucket():
             self.value = min(self.max_tokens, self.value + self.refill_amount)
             self.last_update = datetime.now()
 
-    def consume_token(self) -> None:
+    def consume_token(self) -> bool:
         """consume tokens in bucekt"""
+        self._add_token()
         if self.value > 0:
             self.value -= 1
-            return
+            return True
 
-        raise ValueError(f"token bucket {self.bucket_id} is empty!")
+        return False
 
 
 class TokenBucketManager():
@@ -88,23 +89,16 @@ class TokenBucketManager():
         """
         return self.bucket_pool.pop(bucket_id, None)
 
-    def background_add_tokens(self) -> None:
-        """add tokens to buckets in pool"""
-        while True:
-            sleep(1)
-            for bucket_id, _ in self.bucket_pool.items():
-                self.bucket_pool[bucket_id].add_token()
 
-
-def main():
-    """main"""
-
+if __name__ == "__main__":
+    print("token bucket rate limiting started!")
+    
     n = 100
     user_id = "534f8aed-88de-4a81-aa26-a3b0ed5da26a"
     bucket_id=user_id
-    max_tokens=2 # max number of tokens
-    refill_time=10 # refill time in sec
-    refill_amount=0 # number of token to add during refill
+    max_tokens=10 # max number of tokens
+    refill_time=60 # refill time in sec
+    refill_amount=1 # number of token to add during refill
     t = 0 # time in sec between two request
 
     pool = TokenBucketManager()
@@ -120,17 +114,11 @@ def main():
         print(f"sending {i}th request from user {bucket_id}")
 
         # try to serve request
-        try:
-            print(f"bucket: {pool.bucket_pool[bucket_id]}")
-            pool.bucket_pool[bucket_id].consume_token()
+        if pool.bucket_pool[bucket_id].consume_token():
             print(f"{i}th request served returning response from server")
-        except ValueError as rate_limit_error:
-            print(f"rate limiting in action, send request after {t} seconds : {rate_limit_error}")
+        else:
+            print(f"rate limiting in action, send request after {t} seconds")
 
         sleep(t)
-
-
-if __name__ == "__main__":
-    print("token bucket rate limiting started!")
-    main()
+        
     print("token bucket rate limiting stopped!")
